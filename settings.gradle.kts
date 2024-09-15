@@ -24,6 +24,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "LiveKit Voice Assistant Example"
+rootProject.name = "Claude Voice Assistant Example"
 include(":app")
  

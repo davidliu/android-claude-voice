@@ -48,6 +48,7 @@ android {
 
 dependencies {
 
+    implementation(libs.rive.android)
     implementation(libs.livekit.lib)
     implementation(libs.livekit.components)
     implementation(libs.androidx.core.ktx)
