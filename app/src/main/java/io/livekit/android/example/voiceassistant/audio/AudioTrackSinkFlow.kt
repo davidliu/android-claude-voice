@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import livekit.org.webrtc.AudioTrackSink
 import java.nio.ByteBuffer
+import kotlin.math.round
+import kotlin.math.sqrt
 
 /**
  * Gathers the audio data from a [RemoteAudioTrack] and emits through a flow.
@@ -37,3 +39,28 @@ class AudioTrackSinkFlow : AudioTrackSink {
 }
 
 data class AudioFormat(val bitsPerSample: Int, val sampleRate: Int, val numberOfChannels: Int)
+
+/**
+ * Determines volume of input using the root mean squared of the amplitude.
+ */
+fun calculateVolume(input: ByteBuffer): Double {
+    var average = 0L
+
+    try {
+        input.mark()
+
+        val bytesPerSample = 2
+        val size = input.remaining() / bytesPerSample
+        while (input.remaining() >= bytesPerSample) {
+            val value = input.getShort()
+            average += value * value
+        }
+
+        average /= size
+
+        return round(sqrt(average.toDouble()))
+    } finally {
+        input.reset()
+    }
+}
+

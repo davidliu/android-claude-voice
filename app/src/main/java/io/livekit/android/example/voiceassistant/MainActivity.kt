@@ -1,48 +1,33 @@
-@file:OptIn(Beta::class)
-
 package io.livekit.android.example.voiceassistant
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
-import app.rive.runtime.kotlin.core.Loop
 import app.rive.runtime.kotlin.core.Rive
 import io.livekit.android.AudioOptions
 import io.livekit.android.LiveKit
 import io.livekit.android.LiveKitOverrides
-import io.livekit.android.annotations.Beta
 import io.livekit.android.compose.local.RoomScope
 import io.livekit.android.example.voiceassistant.audio.LocalAudioTrackFlow
-import io.livekit.android.example.voiceassistant.state.AssistantState
-import io.livekit.android.example.voiceassistant.state.rememberAssistantState
-import io.livekit.android.example.voiceassistant.ui.ComposableRiveAnimationView
+import io.livekit.android.example.voiceassistant.audio.rememberLocalVolume
+import io.livekit.android.example.voiceassistant.ui.StateIndicator
+import io.livekit.android.example.voiceassistant.ui.Visualizer
 import io.livekit.android.example.voiceassistant.ui.theme.LiveKitVoiceAssistantExampleTheme
-import io.livekit.android.room.Room
 import io.livekit.android.util.LoggingLevel
-import io.livekit.android.util.flow
 
 // Replace these values with your url and generated token.
 const val wsURL = "ws://192.168.11.2:7880"
 const val token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjYyMjI2NjIsImlzcyI6IkFQSVRMV3JLOHRid3I0NyIsIm5iZiI6MTcyMzYzMDY2Miwic3ViIjoicGhvbmUiLCJ2aWRlbyI6eyJyb29tIjoibXlyb29tIiwicm9vbUpvaW4iOnRydWV9fQ.61oC0qB3cOxIv-MUp89e05Pelw-G_thqg5G7UMEmAXw"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjkwMDE0NTAsImlzcyI6IkFQSVRMV3JLOHRid3I0NyIsIm5iZiI6MTcyNjQwOTQ1MCwic3ViIjoicGhvbmUiLCJ2aWRlbyI6eyJyb29tIjoibXlyb29tIiwicm9vbUpvaW4iOnRydWV9fQ.jz4G7mt-0am_2BtQ8INYh2PDctZFDcRyHKOTFG3qu1A"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +50,7 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
     ConstraintLayout(modifier = modifier) {
         // Setup listening to the local microphone if needed.
         val localAudioFlow = remember { LocalAudioTrackFlow() }
+        val localVolume = rememberLocalVolume(localAudioTrackFlow = localAudioFlow)
         val overrides = remember {
             LiveKitOverrides(
                 audioOptions = AudioOptions(
@@ -86,6 +72,7 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
 
             Visualizer(
                 room = room,
+                localVolume = localVolume,
                 modifier = Modifier
                     .constrainAs(visualizer) {
                         height = Dimension.value(100.dp)
@@ -109,42 +96,6 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
     }
 }
 
-val claudeFont = FontFamily(Font(R.font.tiempos_headline_light))
-
-@Composable
-fun StateIndicator(room: Room, modifier: Modifier = Modifier) {
-    val roomState by room::state.flow.collectAsState(initial = Room.State.CONNECTING)
-
-    val remoteParticipants by room::remoteParticipants.flow.collectAsState()
-    val remoteParticipant by remember(remoteParticipants) {
-        derivedStateOf { remoteParticipants.values.firstOrNull() }
-    }
-    val assistantState = rememberAssistantState(participant = remoteParticipant)
-
-    val stateString = when (roomState) {
-        Room.State.CONNECTING -> "Connecting"
-        Room.State.RECONNECTING -> "Reconnecting"
-        Room.State.DISCONNECTED -> "Disconnected"
-        Room.State.CONNECTED -> {
-            when (assistantState) {
-                AssistantState.LISTENING -> "Start speaking"
-                AssistantState.THINKING,
-                AssistantState.SPEAKING,
-                AssistantState.UNKNOWN -> ""
-            }
-        }
-    }
-
-    val visibility = stateString.isNotBlank()
-    AnimatedVisibility(
-        visible = visibility,
-        enter = fadeIn(),
-        exit = fadeOut(),
-        modifier = modifier,
-    ) {
-        Text(text = stateString, fontFamily = claudeFont)
-    }
-}
 
 @Composable
 fun KeepScreenOn() {
@@ -155,54 +106,4 @@ fun KeepScreenOn() {
             currentView.keepScreenOn = false
         }
     }
-}
-
-@Composable
-fun Visualizer(room: Room, modifier: Modifier) {
-    val roomState by room::state.flow.collectAsState(initial = Room.State.CONNECTING)
-
-    val remoteParticipants by room::remoteParticipants.flow.collectAsState()
-    val remoteParticipant by remember(remoteParticipants) {
-        derivedStateOf { remoteParticipants.values.firstOrNull() }
-    }
-    val assistantState = rememberAssistantState(participant = remoteParticipant)
-
-
-    ComposableRiveAnimationView(
-        modifier = modifier,
-        animation = R.raw.avatar,
-        update = {
-            val animationName = when (roomState) {
-                Room.State.CONNECTING -> "open"
-                Room.State.RECONNECTING -> "waiting"
-                Room.State.DISCONNECTED -> null
-                Room.State.CONNECTED -> {
-                    when (assistantState) {
-                        AssistantState.LISTENING -> "waiting"
-                        AssistantState.THINKING -> "thinking"
-                        AssistantState.SPEAKING -> "writing"
-                        AssistantState.UNKNOWN -> null
-                    }
-                }
-            }
-
-            it.stop()
-
-            if (animationName != null) {
-                val loop = when (animationName) {
-                    "waiting",
-                    "thinking",
-                    "writing" -> {
-                        Loop.LOOP
-                    }
-
-                    else -> {
-                        Loop.ONESHOT
-                    }
-                }
-
-                it.play(animationName, loop)
-            }
-        }
-    )
 }
