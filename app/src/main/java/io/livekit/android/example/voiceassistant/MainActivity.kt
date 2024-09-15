@@ -25,9 +25,9 @@ import io.livekit.android.example.voiceassistant.ui.theme.LiveKitVoiceAssistantE
 import io.livekit.android.util.LoggingLevel
 
 // Replace these values with your url and generated token.
-const val wsURL = "ws://192.168.11.2:7880"
+const val wsURL = ""
 const val token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjkwMDE0NTAsImlzcyI6IkFQSVRMV3JLOHRid3I0NyIsIm5iZiI6MTcyNjQwOTQ1MCwic3ViIjoicGhvbmUiLCJ2aWRlbyI6eyJyb29tIjoibXlyb29tIiwicm9vbUpvaW4iOnRydWV9fQ.jz4G7mt-0am_2BtQ8INYh2PDctZFDcRyHKOTFG3qu1A"
+    ""
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
