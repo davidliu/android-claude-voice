@@ -31,8 +31,6 @@ fun rememberLocalVolume(localAudioTrackFlow: LocalAudioTrackFlow): Float {
         launch(Dispatchers.IO) {
             localAudioTrackFlow.flow.collect { samples ->
                 volume = calculateVolume(samples.data).toFloat()
-
-                //LKLog.e { "volume: $volume" }
             }
         }
     }

@@ -44,7 +44,9 @@ fun UserTranscription(
         ) {
             Text(
                 text = segment.text,
+                fontFamily = claudeFont,
                 fontWeight = FontWeight.Medium,
+                color = Color.Black,
                 modifier = Modifier.padding(8.dp)
             )
         }
