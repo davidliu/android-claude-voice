@@ -45,9 +45,11 @@ android {
         }
     }
 }
-
 dependencies {
 
+    implementation(platform(libs.ktor.bom))
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.core)
     implementation(libs.rive.android)
     implementation(libs.livekit.lib)
     implementation(libs.livekit.components)

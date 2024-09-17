@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontFamily
 import io.livekit.android.example.voiceassistant.R
 import io.livekit.android.example.voiceassistant.state.AssistantState
 import io.livekit.android.example.voiceassistant.state.rememberAssistantState
+import io.livekit.android.example.voiceassistant.token.TokenResponse
 import io.livekit.android.room.Room
 import io.livekit.android.util.flow
 
@@ -23,7 +24,7 @@ import io.livekit.android.util.flow
 val claudeFont = FontFamily(Font(R.font.tiempos_headline_light))
 
 @Composable
-fun StateIndicator(room: Room, modifier: Modifier = Modifier) {
+fun StateIndicator(tokenResponse: TokenResponse?, room: Room, modifier: Modifier = Modifier) {
     val roomState by room::state.flow.collectAsState(initial = Room.State.CONNECTING)
 
     val remoteParticipants by room::remoteParticipants.flow.collectAsState()
@@ -32,16 +33,22 @@ fun StateIndicator(room: Room, modifier: Modifier = Modifier) {
     }
     val assistantState = rememberAssistantState(participant = remoteParticipant)
 
-    val stateString = when (roomState) {
-        Room.State.CONNECTING -> "Connecting"
-        Room.State.RECONNECTING -> "Reconnecting"
-        Room.State.DISCONNECTED -> "Disconnected"
-        Room.State.CONNECTED -> {
-            when (assistantState) {
-                AssistantState.LISTENING -> "Start speaking"
-                AssistantState.THINKING,
-                AssistantState.SPEAKING,
-                AssistantState.UNKNOWN -> ""
+    val stateString =
+        if (tokenResponse == null) {
+            // Still awaiting token server response.
+            "Connecting"
+        } else {
+            when (roomState) {
+                Room.State.CONNECTING -> "Connecting"
+                Room.State.RECONNECTING -> "Reconnecting"
+                Room.State.DISCONNECTED -> "Disconnected"
+                Room.State.CONNECTED -> {
+                    when (assistantState) {
+                        AssistantState.LISTENING -> "Start speaking"
+                        AssistantState.THINKING,
+                        AssistantState.SPEAKING,
+                        AssistantState.UNKNOWN -> ""
+                    }
             }
         }
     }
